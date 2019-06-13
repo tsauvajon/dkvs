@@ -1,13 +1,13 @@
-package main
+package dkvs
 
-func (n *node) checkMasterHealth() error {
+func (n *Node) checkMasterHealth() error {
 	return ERROR_NOT_IMPLEMENTED
 }
 
-func (n *node) electNewLeader() error {
+func (n *Node) electNewLeader() error {
 	return ERROR_NOT_IMPLEMENTED
 }
 
-func (n *node) promoteToMaster() error {
+func (n *Node) promoteToMaster() error {
 	return ERROR_NOT_IMPLEMENTED
 }

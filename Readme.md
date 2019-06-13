@@ -30,6 +30,9 @@ design a way to proxy the queries:
 - should it be a separate thing
 - how to keep an up to date list of nodes
 
+### Dependencies:
+
+- Generate unique IDs: https://github.com/rs/xid
 
 ### References:
 
