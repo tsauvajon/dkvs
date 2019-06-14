@@ -1,4 +1,4 @@
-Distributed Key-Value store
+# Distributed Key-Value store
 
 Node:
 Can be slave or master.
@@ -30,6 +30,17 @@ design a way to proxy the queries:
 - should it be a separate thing
 - how to keep an up to date list of nodes
 
+### Design choices
+
+Single write master, many read slaves
+
+Synchronous replication on new writes  
+Async replication when a node joins
+
+Eventual consistency
+
+Abstract the Storage and Transport layers so it can use different implementations
+
 ### Dependencies:
 
 - Generate unique IDs: https://github.com/rs/xid
@@ -47,3 +58,6 @@ https://www.cs.colostate.edu/~cs551/CourseNotes/Synchronization/BullyExample.htm
 
 - Creating a Distributed Hash table:  
 https://medium.com/techlog/chord-building-a-dht-distributed-hash-table-in-golang-67c3ce17417b
+
+- Distributed Hash table:  
+https://github.com/arriqaaq/chord

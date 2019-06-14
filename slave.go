@@ -1,13 +1,13 @@
 package dkvs
 
 func (n *Node) checkMasterHealth() error {
-	return ERROR_NOT_IMPLEMENTED
+	return errorNotImplemented
 }
 
 func (n *Node) electNewLeader() error {
-	return ERROR_NOT_IMPLEMENTED
+	return errorNotImplemented
 }
 
 func (n *Node) promoteToMaster() error {
-	return ERROR_NOT_IMPLEMENTED
+	return errorNotImplemented
 }

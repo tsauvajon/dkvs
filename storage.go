@@ -2,6 +2,7 @@ package dkvs
 
 import "sync"
 
+// Storage is a generic storage that can save and retrieve values
 type Storage interface {
 	Get(key string) ([]byte, error)
 	Set(key, val string) error
@@ -14,6 +15,7 @@ type store struct {
 	lock sync.RWMutex
 }
 
+// NewStore creates an in memory data store
 func NewStore() Storage {
 	return &store{
 		data: make(map[string]string),
@@ -26,7 +28,7 @@ func (s *store) Get(key string) ([]byte, error) {
 
 	val, ok := s.data[key]
 	if !ok {
-		return nil, ERROR_KEY_NOT_FOUND
+		return nil, errorKeyNotFound
 	}
 	return []byte(val), nil
 }

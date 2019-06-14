@@ -6,24 +6,49 @@ import "testing"
 func TestSetGet(t *testing.T) {
 	s := NewStore()
 
-	key := "testkey123"
-	value := "hello"
-	expected := "hello"
-
-	if err := s.Set(key, value); err != nil {
-		t.Errorf("setting failed: %v", err)
-		return
+	type testCase struct {
+		key, value, expected string
 	}
 
-	actual, err := s.Get(key)
-
-	if err != nil {
-		t.Errorf("setting failed: %v", err)
-		return
+	testCases := []*testCase{
+		&testCase{
+			key:      "testkey123",
+			value:    "hello",
+			expected: "hello",
+		},
+		&testCase{
+			key:      "q",
+			value:    "hello",
+			expected: "hello",
+		},
+		&testCase{
+			key:      "testkey123",
+			value:    "hello1",
+			expected: "hello1",
+		},
+		&testCase{
+			key:      "testkey123",
+			value:    "asdsad",
+			expected: "asdsad",
+		},
 	}
 
-	if string(actual) != expected {
-		t.Errorf("expected %s, got %s", expected, string(actual))
+	for _, test := range testCases {
+		if err := s.Set(test.key, test.value); err != nil {
+			t.Errorf("setting failed: %v", err)
+			return
+		}
+
+		actual, err := s.Get(test.key)
+
+		if err != nil {
+			t.Errorf("setting failed: %v", err)
+			return
+		}
+
+		if string(actual) != test.expected {
+			t.Errorf("expected %s, got %s", test.expected, string(actual))
+		}
 	}
 }
 
