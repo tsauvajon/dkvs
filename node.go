@@ -1,13 +1,19 @@
 package dkvs
 
-import "github.com/rs/xid"
+import (
+	"fmt"
+
+	"github.com/rs/xid"
+)
 
 // Node is an autonomous kvs node that can be either a slave or a master
 type Node struct {
-	id        string
+	ID        string `json:"id"`
 	storage   Storage
 	transport Transport
-	allNodes  []*Node
+	nodes     map[string]*Node
+	Master    bool   `json:"master"`
+	Address   string `json:"addr"`
 	// transaction list
 	// transaction log
 }
@@ -18,19 +24,40 @@ func (n *Node) ReadValue(key string) ([]byte, error) {
 }
 
 // NewMaster creates a new node as a master
-func NewMaster() (*Node, error) {
-	return newNode(), nil
+func NewMaster(addr string) (*Node, error) {
+	n, err := newNode(addr)
+	n.Master = true
+	n.nodes[n.ID] = n
+	return n, err
 }
 
 // NewSlave creates a new node that joins an existing master
-func NewSlave(master string) (*Node, error) {
-	return nil, errorNotImplemented
+func NewSlave(addr, master string) (*Node, error) {
+	n, err := newNode(addr)
+	// TODO: register with the master
+	return n, err
 }
 
-func newNode() *Node {
-	guid := xid.New()
+func newNode(addr string) (*Node, error) {
 	n := &Node{
-		id: guid.String(),
+		ID:        xid.New().String(),
+		nodes:     make(map[string]*Node),
+		Address:   addr,
+		storage:   NewStore(),
+		transport: NewHTTPTransport(),
 	}
-	return n
+
+	go func() {
+		err := n.transport.Start(n.Address)
+		if err != nil {
+			panic(fmt.Sprintf("failed to start transport with error: %v", err))
+		}
+	}()
+
+	return n, nil
+}
+
+// Close will properly close the node
+func (n *Node) Close() error {
+	return n.transport.Stop()
 }
