@@ -119,7 +119,7 @@ func (t *httpTransport) readHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, string(val))
+	w.Write(val)
 }
 
 func (t *httpTransport) listHandler(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +130,15 @@ func (t *httpTransport) listHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, val)
+
+	jsonVal, err := json.Marshal(val)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	w.Write(jsonVal)
 }
 
 func (t *httpTransport) joinHandler(w http.ResponseWriter, r *http.Request) {
