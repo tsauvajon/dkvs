@@ -20,7 +20,6 @@ Can be slave or master.
 all nodes, slave or master:
 - READ a value
 - maintain a list of all nodes
-- (Out of scope for this repo) maintain a transaction log or something similar
 
 slave:
 - check the master node's health
