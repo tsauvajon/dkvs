@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Test the transport by keeping it open for 2 seconds
+// Test the transport by keeping it open for 100ms without error before stopping it
 func TestTransport(t *testing.T) {
 	tp := NewHTTPTransport()
 

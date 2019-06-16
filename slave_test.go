@@ -9,7 +9,8 @@ import (
 	"time"
 )
 
-// Test replication to multiple slaves when writing to master
+// Test replication (of writes and node list) to multiple slaves when writing
+// to master
 func TestSlave(t *testing.T) {
 	masterAddr := ":2121"
 	slaveAddr1 := ":2222"
