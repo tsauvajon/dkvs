@@ -2,6 +2,7 @@ package dkvs
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/rs/xid"
@@ -9,9 +10,9 @@ import (
 
 // Node is an autonomous kvs node that can be either a slave or a master
 type Node struct {
-	ID      string `json:"id"`
-	Master  bool   `json:"master"`
-	Address string `json:"addr"`
+	ID       string `json:"id"`
+	MasterID string `json:"master"`
+	Address  string `json:"addr"`
 
 	nodes  map[string]*Node
 	nMutex sync.RWMutex
@@ -27,6 +28,12 @@ func (n *Node) ReadValue(key string) ([]byte, error) {
 
 // ListNodes returns a slice of all nodes
 func (n *Node) ListNodes() ([]*Node, error) {
+	// if the node list is empty (for example, in a slave that just got started)
+	if n.nodes == nil {
+		// we fetch the list from the master
+
+	}
+
 	nodes := make([]*Node, 0)
 	n.nMutex.Lock()
 	defer n.nMutex.Unlock()
@@ -35,6 +42,11 @@ func (n *Node) ListNodes() ([]*Node, error) {
 		nodes = append(nodes, node)
 	}
 	return nodes, nil
+}
+
+// IsMaster checks if the current node is the master
+func (n *Node) IsMaster() bool {
+	return n.MasterID == n.ID
 }
 
 func newNode(addr string) (*Node, error) {
@@ -53,10 +65,12 @@ func newNode(addr string) (*Node, error) {
 		}
 	}()
 
+	log.Printf("Created node with id %s\n", n.ID)
+
 	return n, nil
 }
 
-// Close will properly close the node
+// Close properly closes the node
 func (n *Node) Close() error {
 	return n.transport.Stop()
 }

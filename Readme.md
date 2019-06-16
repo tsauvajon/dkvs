@@ -37,11 +37,14 @@ master
 - push an update of the list of nodes when a node joins or leaves 
 
 OUT OF SCOPE:
-- database client
+- database client (but the HTTP API is available)
 - proxy/load balancer to redirect queries to the correct nodes (random or
 closest node for reads, master for writes) - this could be included in the client
-- security
-- authentication
+- security and authentication
+- consistency: there are a few cases where data can vary between nodes, and I have
+not implemented any fix for these cases. Possible solutions:
+    - store a transaction log and replay the logs on slaves in the same order
+    - periodically check for discrepancies, apply value from master
 
 ### Design choices
 
@@ -64,6 +67,14 @@ Abstract the Storage and Transport layers so it can use different implementation
 ### Dependencies:
 
 - Generate unique IDs: https://github.com/rs/xid
+
+### Improvements/To-do list
+
+- check that queries come from master
+- be more asynchronous
+- persist data to disk
+- dockerize
+- abstract queries because it takes 20 lines to make a POST query
 
 ### References:
 

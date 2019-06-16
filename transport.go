@@ -42,6 +42,8 @@ func (t *httpTransport) Start(n *Node) error {
 	h.HandleFunc("/read", t.readHandler)
 	h.HandleFunc("/list", t.listHandler)
 	h.HandleFunc("/join", t.joinHandler)
+	h.HandleFunc("/update", t.updateHandler)
+	h.HandleFunc("/receive", t.receiveHandler)
 
 	t.srv = &http.Server{Addr: t.n.Address, Handler: h}
 
@@ -99,6 +101,29 @@ func (t *httpTransport) writeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (t *httpTransport) receiveHandler(w http.ResponseWriter, r *http.Request) {
+	var p struct {
+		Key   string `json:"key"`
+		Value string `json:"val"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&p); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	err := t.Receive(p.Key, p.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (t *httpTransport) readHandler(w http.ResponseWriter, r *http.Request) {
 	var p struct {
 		Key string `json:"key"`
@@ -142,9 +167,7 @@ func (t *httpTransport) listHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (t *httpTransport) joinHandler(w http.ResponseWriter, r *http.Request) {
-	var p struct {
-		Node *Node `json:"node"`
-	}
+	var p *Node
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&p); err != nil {
@@ -153,7 +176,27 @@ func (t *httpTransport) joinHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := t.Join(p.Node)
+	err := t.Join(p)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (t *httpTransport) updateHandler(w http.ResponseWriter, r *http.Request) {
+	var p map[string]*Node
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&p); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	err := t.Update(p)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, err)
@@ -178,5 +221,13 @@ func (t *httpTransport) List() ([]*Node, error) {
 }
 
 func (t *httpTransport) Join(slave *Node) error {
-	return t.n.JoinMaster(slave)
+	return t.n.Join(slave)
+}
+
+func (t *httpTransport) Update(nodes map[string]*Node) error {
+	return t.n.ReceiveListUpdate(nodes)
+}
+
+func (t *httpTransport) Receive(key, val string) error {
+	return t.n.ReceiveWrite(key, val)
 }

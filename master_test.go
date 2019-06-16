@@ -3,7 +3,6 @@ package dkvs
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -22,7 +21,7 @@ func TestMaster(t *testing.T) {
 	}
 
 	// wait for the server to start
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 
 	// Write
 	url := "http://" + masterAddr + "/write"
@@ -98,9 +97,9 @@ func TestMaster(t *testing.T) {
 	defer listResp.Body.Close()
 
 	if listResp.StatusCode != 200 {
-		buf2 := new(bytes.Buffer)
-		buf2.ReadFrom(listResp.Body)
-		body = buf2.String()
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(listResp.Body)
+		body := buf.String()
 		t.Errorf("/list query failed with status %d: %v", listResp.StatusCode, body)
 		return
 	}
@@ -109,8 +108,6 @@ func TestMaster(t *testing.T) {
 
 	decoder := json.NewDecoder(listResp.Body)
 	if err = decoder.Decode(&list); err != nil {
-		fmt.Println("listresp.body: ", listResp.Body)
-		fmt.Println("body: ", body)
 		t.Errorf("error decoding the /list response: %v", err)
 		return
 	}
@@ -120,7 +117,7 @@ func TestMaster(t *testing.T) {
 		return
 	}
 
-	if !list[0].Master {
+	if !list[0].IsMaster() {
 		t.Error("expected the node to be master")
 		return
 	}

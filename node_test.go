@@ -22,7 +22,7 @@ func TestNewNode(t *testing.T) {
 		return
 	}
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 
 	s, err := NewSlave(":1235", ":1234")
 	if s != nil {
@@ -39,5 +39,5 @@ func TestNewNode(t *testing.T) {
 		return
 	}
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 }
