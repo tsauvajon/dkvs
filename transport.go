@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -46,7 +47,7 @@ func (t *httpTransport) Start(n *Node) error {
 
 	go func() {
 		if err := t.srv.ListenAndServe(); err != nil {
-			fmt.Print(err)
+			log.Println(err)
 		}
 	}()
 
@@ -118,7 +119,7 @@ func (t *httpTransport) readHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, val)
+	fmt.Fprint(w, string(val))
 }
 
 func (t *httpTransport) listHandler(w http.ResponseWriter, r *http.Request) {

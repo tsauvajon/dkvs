@@ -1,15 +1,12 @@
 package dkvs
 
 import (
-	"os"
 	"testing"
 	"time"
 )
 
 // Test instantiating masters and slaves
 func TestNewNode(t *testing.T) {
-	// do not print "server closed" messages on the console
-	os.Stdout, _ = os.Open(os.DevNull)
 	m, err := NewMaster(":1234")
 	if m != nil {
 		defer m.Close()

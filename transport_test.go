@@ -1,7 +1,6 @@
 package dkvs
 
 import (
-	"os"
 	"testing"
 	"time"
 )
@@ -20,8 +19,6 @@ func TestTransport(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	// we do not want to see the closing message in the console
-	os.Stdout, _ = os.Open(os.DevNull)
 	err := tp.Stop()
 	if err != nil {
 		t.Errorf("failed to stop transport with error: %v", err)

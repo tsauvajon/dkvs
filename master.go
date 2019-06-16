@@ -9,12 +9,21 @@ func (n *Node) checkNodesHealth() error {
 
 // Replicates a write to all the nodes
 func (n *Node) pushSetToNodes(key, val string) error {
-	return errorNotImplemented
+	// return errorNotImplemented
+	return nil
 }
 
 // Checks if this node is the master
 func (n *Node) isMaster() (bool, error) {
 	return n.Master, nil
+}
+
+// NewMaster creates a new node as a master
+func NewMaster(addr string) (*Node, error) {
+	n, err := newNode(addr)
+	n.Master = true
+	n.nodes[n.ID] = n
+	return n, err
 }
 
 // JoinMaster allows a slave to join this node

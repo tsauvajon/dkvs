@@ -37,21 +37,6 @@ func (n *Node) ListNodes() ([]*Node, error) {
 	return nodes, nil
 }
 
-// NewMaster creates a new node as a master
-func NewMaster(addr string) (*Node, error) {
-	n, err := newNode(addr)
-	n.Master = true
-	n.nodes[n.ID] = n
-	return n, err
-}
-
-// NewSlave creates a new node that joins an existing master
-func NewSlave(addr, master string) (*Node, error) {
-	n, err := newNode(addr)
-	// TODO: register with the master
-	return n, err
-}
-
 func newNode(addr string) (*Node, error) {
 	n := &Node{
 		ID:        xid.New().String(),
