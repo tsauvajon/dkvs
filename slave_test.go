@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Test replication to multiple slaves when writing to master
 func TestSlave(t *testing.T) {
 	masterAddr := ":2121"
 	slaveAddr1 := ":2222"
@@ -163,7 +164,66 @@ func TestSlave(t *testing.T) {
 
 	if string(jsonVal) != "le 100" {
 		t.Errorf("expected \"le 100\", got \"%s\"", string(jsonVal[0:len(jsonVal)]))
+	}
+}
 
-		time.Sleep(3 * time.Second)
+// Test that slaves cannot write
+func TestWriteSlave(t *testing.T) {
+	masterAddr := ":3121"
+	slaveAddr := ":3222"
+
+	m, err := NewMaster(masterAddr)
+	if m != nil {
+		defer m.Close()
+	}
+
+	if err != nil {
+		t.Errorf("creating a slave failed with error: %v", err)
+		return
+	}
+
+	if m.ID == "" {
+		t.Error("created nodes should have an id")
+		return
+	}
+
+	// wait for the server to start
+	time.Sleep(500 * time.Millisecond)
+
+	s, err := NewSlave(slaveAddr, masterAddr)
+	if s != nil {
+		defer s.Close()
+	}
+	if err != nil {
+		t.Errorf("creating a slave failed with error: %v", err)
+		return
+	}
+
+	time.Sleep(500 * time.Millisecond)
+
+	// Write
+	url := "http://" + slaveAddr + "/write"
+	encoding := "application/json"
+
+	payload := map[string]string{
+		"key": "qwerty",
+		"val": "uiop",
+	}
+	jsonPayload, _ := json.Marshal(payload)
+	buffer := bytes.NewBuffer(jsonPayload)
+
+	resp, err := http.Post(url, encoding, buffer)
+	if err != nil {
+		t.Errorf("error posting /write: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	body := buf.String()
+
+	if resp.StatusCode == 200 || body != errorNotMaster.Error() {
+		t.Errorf("should be denied, instead got: %v", body)
+		return
 	}
 }

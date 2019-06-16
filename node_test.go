@@ -41,3 +41,10 @@ func TestNewNode(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 }
+
+func TestIsolatedNode(t *testing.T) {
+	_, err := NewSlave(":9999", ":123")
+	if err == nil {
+		t.Error("slaves should not be created without a valid master")
+	}
+}
