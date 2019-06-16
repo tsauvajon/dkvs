@@ -14,7 +14,22 @@ func (n *Node) pushSetToNodes(key, val string) error {
 
 // Checks if this node is the master
 func (n *Node) isMaster() (bool, error) {
-	return false, errorNotImplemented
+	return n.Master, nil
+}
+
+// JoinMaster allows a slave to join this node
+func (n *Node) JoinMaster(slave *Node) error {
+	if m, err := n.isMaster(); err != nil {
+		return fmt.Errorf("could not check if node is master: %v", err)
+	} else if !m {
+		return errorNotMaster
+	}
+
+	n.nMutex.Lock()
+	defer n.nMutex.Unlock()
+
+	n.nodes[slave.ID] = slave
+	return nil
 }
 
 // WriteValue will write a value to the internal

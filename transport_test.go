@@ -11,7 +11,7 @@ func TestTransport(t *testing.T) {
 	tp := NewHTTPTransport()
 
 	go func() {
-		err := tp.Start(":2345")
+		err := tp.Start(&Node{Address: ":2345"})
 		if err != nil {
 			t.Errorf("failed to start transport with error: %v", err)
 			return

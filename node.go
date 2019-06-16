@@ -2,25 +2,39 @@ package dkvs
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/rs/xid"
 )
 
 // Node is an autonomous kvs node that can be either a slave or a master
 type Node struct {
-	ID        string `json:"id"`
+	ID      string `json:"id"`
+	Master  bool   `json:"master"`
+	Address string `json:"addr"`
+
+	nodes  map[string]*Node
+	nMutex sync.RWMutex
+
 	storage   Storage
 	transport Transport
-	nodes     map[string]*Node
-	Master    bool   `json:"master"`
-	Address   string `json:"addr"`
-	// transaction list
-	// transaction log
 }
 
-// ReadValue will search the value for the provided key in the storage
+// ReadValue searches the value for the provided key in the storage
 func (n *Node) ReadValue(key string) ([]byte, error) {
 	return n.storage.Get(key)
+}
+
+// ListNodes returns a slice of all nodes
+func (n *Node) ListNodes() ([]*Node, error) {
+	nodes := make([]*Node, 0)
+	n.nMutex.Lock()
+	defer n.nMutex.Unlock()
+
+	for _, node := range n.nodes {
+		nodes = append(nodes, node)
+	}
+	return nodes, nil
 }
 
 // NewMaster creates a new node as a master
@@ -48,7 +62,7 @@ func newNode(addr string) (*Node, error) {
 	}
 
 	go func() {
-		err := n.transport.Start(n.Address)
+		err := n.transport.Start(n)
 		if err != nil {
 			panic(fmt.Sprintf("failed to start transport with error: %v", err))
 		}
