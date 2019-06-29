@@ -126,6 +126,8 @@ func (n *Node) Join(slave *Node) error {
 	n.nMutex.Lock()
 	defer n.nMutex.Unlock()
 
+	slave.MasterID = n.MasterID
+
 	n.nodes[slave.ID] = slave
 
 	log.Printf("node %s joined", slave.ID)

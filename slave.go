@@ -26,6 +26,8 @@ func (n *Node) ReceiveListUpdate(nodes map[string]*Node) error {
 	defer n.nMutex.Unlock()
 	n.nodes = nodes
 
+	n.MasterID = nodes[n.ID].MasterID
+
 	return nil
 }
 
@@ -67,7 +69,5 @@ func NewSlave(addr, master string) (*Node, error) {
 		return nil, fmt.Errorf("joining master bad response: %v", body)
 	}
 
-	// TODO: register with the master
-	// TODO: set MasterID
 	return n, err
 }
