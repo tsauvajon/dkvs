@@ -1,6 +1,7 @@
 package dkvs
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
@@ -24,6 +25,27 @@ type Node struct {
 // ReadValue searches the value for the provided key in the storage
 func (n *Node) ReadValue(key string) ([]byte, error) {
 	return n.storage.Get(key)
+}
+
+// ReadMultipleValues searches for values associated with a range of keys
+func (n *Node) ReadMultipleValues(keys ...string) ([]byte, error) {
+	type payload struct {
+		Key   string `json:"k"`
+		Value string `json:"v"`
+		Error error  `json:"e"`
+	}
+	p := make([]*payload, 0)
+
+	for _, k := range keys {
+		v, err := n.storage.Get(k)
+		p = append(p, &payload{
+			Key:   k,
+			Value: string(v),
+			Error: err,
+		})
+	}
+
+	return json.Marshal(p)
 }
 
 // ListNodes returns a slice of all nodes

@@ -38,8 +38,10 @@ func (t *httpTransport) Start(n *Node) error {
 	t.n = n
 	h := http.NewServeMux()
 
+	// simplistic routes; using gRPC or a REST API would be better practice
 	h.HandleFunc("/write", t.writeHandler)
 	h.HandleFunc("/read", t.readHandler)
+	h.HandleFunc("/multi", t.multiHandler)
 	h.HandleFunc("/list", t.listHandler)
 	h.HandleFunc("/join", t.joinHandler)
 	h.HandleFunc("/update", t.updateHandler)
@@ -147,6 +149,29 @@ func (t *httpTransport) readHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(val)
 }
 
+func (t *httpTransport) multiHandler(w http.ResponseWriter, r *http.Request) {
+	var p struct {
+		Keys []string `json:"keys"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&p); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	values, err := t.Multi(p.Keys)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(values)
+}
+
 func (t *httpTransport) listHandler(w http.ResponseWriter, r *http.Request) {
 	val, err := t.List()
 	if err != nil {
@@ -212,6 +237,11 @@ func (t *httpTransport) Write(key, val string) error {
 
 func (t *httpTransport) Read(key string) ([]byte, error) {
 	return t.n.ReadValue(key)
+
+}
+
+func (t *httpTransport) Multi(keys []string) ([]byte, error) {
+	return t.n.ReadMultipleValues(keys...)
 
 }
 
