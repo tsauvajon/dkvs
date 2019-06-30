@@ -1,12 +1,11 @@
 package dkvs
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
-
-	"github.com/rs/xid"
 )
 
 // Node is an autonomous kvs node that can be either a slave or a master
@@ -71,9 +70,25 @@ func (n *Node) IsMaster() bool {
 	return n.MasterID == n.ID
 }
 
+func newID() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), err
+}
+
 func newNode(addr string) (*Node, error) {
+	id, err := newID()
+
+	if err != nil {
+		return nil, err
+	}
+
 	n := &Node{
-		ID:        xid.New().String(),
+		ID:        id,
 		nodes:     make(map[string]*Node),
 		Address:   addr,
 		storage:   NewStore(),
@@ -94,5 +109,6 @@ func newNode(addr string) (*Node, error) {
 
 // Close properly closes the node
 func (n *Node) Close() error {
+	// todo: send a message to master indicating that the node shut down
 	return n.transport.Stop()
 }

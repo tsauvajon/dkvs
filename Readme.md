@@ -63,9 +63,12 @@ data gets updated while replicating.
 
 Abstract the Storage and Transport layers so it can use different implementations
 
+Basic HTTP queries rather than gRPC + protobuf because I didn't want to include
+any dependency.
+
 ### Dependencies:
 
-- Generate unique IDs: https://github.com/rs/xid
+None
 
 ### Improvements/To-do list
 
@@ -77,6 +80,7 @@ Abstract the Storage and Transport layers so it can use different implementation
     - implement a transaction log or another way to order all the queries
 - dockerize for easier deployment
 - abstract making HTTP queries because it takes 20 lines to make a POST query
+- better ID generation
 
 ### References:
 
