@@ -12,7 +12,6 @@ import (
 // Starts a new master node; test reading, writing and getting the nodes list
 func TestMaster(t *testing.T) {
 	masterAddr := ":1212"
-	encoding := "application/json"
 
 	if m, err := NewMaster(masterAddr); m != nil {
 		defer m.Close()

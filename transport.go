@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -46,6 +47,7 @@ func (t *httpTransport) Start(n *Node) error {
 	h.HandleFunc("/join", t.joinHandler)
 	h.HandleFunc("/update", t.updateHandler)
 	h.HandleFunc("/receive", t.receiveHandler)
+	h.HandleFunc("/replicate", t.replicateHandler)
 
 	t.srv = &http.Server{Addr: t.n.Address, Handler: h}
 
@@ -231,6 +233,16 @@ func (t *httpTransport) updateHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (t *httpTransport) replicateHandler(w http.ResponseWriter, r *http.Request) {
+	if err := t.Replicate(r.Body); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (t *httpTransport) Write(key, val string) error {
 	return t.n.WriteValue(key, val)
 }
@@ -260,4 +272,8 @@ func (t *httpTransport) Update(nodes map[string]*Node) error {
 
 func (t *httpTransport) Receive(key, val string) error {
 	return t.n.ReceiveWrite(key, val)
+}
+
+func (t *httpTransport) Replicate(r io.Reader) error {
+	return t.n.ReplicateFromMaster(r)
 }

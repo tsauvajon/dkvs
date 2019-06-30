@@ -11,3 +11,5 @@ var defaultConfig = &config{
 	retriesCount:   3,
 	retriesDelayMs: 10000,
 }
+
+var encoding = "application/json"

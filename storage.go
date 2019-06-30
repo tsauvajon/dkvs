@@ -1,11 +1,18 @@
 package dkvs
 
-import "sync"
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"sync"
+)
 
 // Storage is a generic storage that can save and retrieve values
 type Storage interface {
 	Get(key string) ([]byte, error)
 	Set(key, val string) error
+	ReplicateTo() (*bytes.Buffer, error)
+	ReplicateFrom(data io.Reader) error
 }
 
 // maps are not safe for concurrent use:
@@ -39,4 +46,21 @@ func (s *store) Set(key, val string) error {
 
 	s.data[key] = val
 	return nil
+}
+
+func (s *store) ReplicateTo() (*bytes.Buffer, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	buf := new(bytes.Buffer)
+	encoder := json.NewEncoder(buf)
+	return buf, encoder.Encode(s.data)
+}
+
+func (s *store) ReplicateFrom(data io.Reader) error {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+
+	decoder := json.NewDecoder(data)
+	return decoder.Decode(&s.data)
 }

@@ -38,7 +38,8 @@ master
 OUT OF SCOPE:
 - database client (but the HTTP API is available)
 - proxy/load balancer to redirect queries to the correct nodes (random or
-closest node for reads, master for writes) - this could be included in the client
+closest node for reads, master for writes) - this could be included in the client,
+    in the nodes or as an external tool (service discovery would be a good option)
 - security and authentication
 - consistency: there are a few cases where data can vary between nodes, and I have
 not implemented any fix for these cases. Possible solutions:
@@ -55,11 +56,11 @@ for 5 sec (low value used for testing). All un-replicated writes will be lost.
 Asynchronous replication on new writes - this could cause inconsistencies if
 writes do not get handled in the same order in every node: two successive writes
 on the same key, played on different orders on two nodes, would result in
-different values in these  nodes  
+different values in these nodes.  
 
 Async replication when a node joins : all the data is copied from the master to
 the joining node by dribs and drabs. This could cause inconsistencies if the
-data gets updated while replicating  
+data gets updated while replicating.  
 
 Abstract the Storage and Transport layers so it can use different implementations
 
@@ -69,11 +70,14 @@ Abstract the Storage and Transport layers so it can use different implementation
 
 ### Improvements/To-do list
 
-- check that queries come from master
-- be more asynchronous
+- check that queries (i.e. write queries, list update queries) come from master
+    and not another slave
 - persist data to disk
-- dockerize
-- abstract queries because it takes 20 lines to make a POST query
+- one of the following:
+    - regularly check for entropy and fix errors
+    - implement a transaction log or another way to order all the queries
+- dockerize for easier deployment
+- abstract making HTTP queries because it takes 20 lines to make a POST query
 
 ### References:
 

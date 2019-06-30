@@ -42,6 +42,7 @@ func TestNewNode(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 }
 
+// Test that nodes cannot start without a master
 func TestIsolatedNode(t *testing.T) {
 	_, err := NewSlave(":9999", ":123")
 	if err == nil {

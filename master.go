@@ -38,7 +38,6 @@ func (n *Node) pushWriteToSlaves(key, val string) error {
 
 func (n *Node) pushWriteToOneSlave(slave *Node, key, val string) error {
 	url := "http://" + slave.Address + "/receive"
-	encoding := "application/json"
 
 	payload := map[string]string{
 		"key": key,
@@ -88,7 +87,6 @@ func (n *Node) pushListUpdateToSlaves() error {
 
 func (n *Node) pushListUpdateToOneSlave(slave *Node) error {
 	url := "http://" + slave.Address + "/update"
-	encoding := "application/json"
 	payload, _ := json.Marshal(n.nodes)
 	buffer := bytes.NewBuffer(payload)
 
@@ -104,6 +102,32 @@ func (n *Node) pushListUpdateToOneSlave(slave *Node) error {
 
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("pushing list update bad response: %v", body)
+	}
+
+	return nil
+}
+
+// replicateToSlave replicates data by streaming it from the master to the slave.
+func (n *Node) replicateToSlave(slave *Node) error {
+	buffer, err := n.storage.ReplicateTo()
+
+	if err != nil {
+		return err
+	}
+
+	url := "http://" + slave.Address + "/replicate"
+
+	resp, err := http.Post(url, encoding, buffer)
+	if err != nil {
+		return fmt.Errorf("replicate: %v", err)
+	}
+	defer resp.Body.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	body := buf.String()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("replicate bad response: %v", body)
 	}
 
 	return nil
@@ -127,8 +151,11 @@ func (n *Node) Join(slave *Node) error {
 	defer n.nMutex.Unlock()
 
 	slave.MasterID = n.MasterID
-
 	n.nodes[slave.ID] = slave
+
+	if err := n.replicateToSlave(slave); err != nil {
+		return err
+	}
 
 	log.Printf("node %s joined", slave.ID)
 

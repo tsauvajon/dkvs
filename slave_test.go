@@ -56,7 +56,6 @@ func TestSlave(t *testing.T) {
 
 	// Write
 	url := "http://" + masterAddr + "/write"
-	encoding := "application/json"
 
 	payload := map[string]string{
 		"key": "toto1",
@@ -137,7 +136,6 @@ func TestSlave(t *testing.T) {
 
 	// Read from slave 2
 	url = "http://" + slaveAddr2 + "/read"
-	encoding = "application/json"
 
 	payload = map[string]string{
 		"key": "toto1",
@@ -165,6 +163,161 @@ func TestSlave(t *testing.T) {
 
 	if string(jsonVal) != "le 100" {
 		t.Errorf("expected \"le 100\", got \"%s\"", string(jsonVal[0:len(jsonVal)]))
+	}
+}
+
+// Test initial replication
+func TestInitialReplication(t *testing.T) {
+	masterAddr := ":9873"
+	slaveAddr := ":9872"
+
+	m, err := NewMaster(masterAddr)
+	if m != nil {
+		defer m.Close()
+	}
+
+	if err != nil {
+		t.Errorf("creating a slave failed with error: %v", err)
+		return
+	}
+
+	if m.ID == "" {
+		t.Error("created nodes should have an id")
+		return
+	}
+
+	// wait for the server to start
+	time.Sleep(500 * time.Millisecond)
+
+	// Write
+	url := "http://" + masterAddr + "/write"
+	data := map[string]string{
+		"toto":             "le sang",
+		"qwerty":           "uiop",
+		"toasdfg":          "hjkl",
+		"zxcv":             "bnm",
+		"qazwsxedffsdfs":   "salut",
+		"pain au chocolat": "chocolatine",
+	}
+
+	for k, v := range data {
+		payload := map[string]string{
+			"key": k,
+			"val": v,
+		}
+		jsonPayload, _ := json.Marshal(payload)
+		buffer := bytes.NewBuffer(jsonPayload)
+
+		resp, err := http.Post(url, encoding, buffer)
+		if err != nil {
+			t.Errorf("error posting /write: %v", err)
+			return
+		}
+		defer resp.Body.Close()
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		body := buf.String()
+
+		if resp.StatusCode != 200 {
+			t.Errorf("/write query failed: %v", body)
+			return
+		}
+	}
+
+	time.Sleep(500 * time.Millisecond)
+
+	slave, err := NewSlave(slaveAddr, masterAddr)
+	if slave != nil {
+		defer slave.Close()
+	}
+	if err != nil {
+		t.Errorf("creating a slave failed with error: %v", err)
+		return
+	}
+
+	// wait for the replication to complete
+	time.Sleep(2000 * time.Millisecond)
+
+	// Update a value
+	url = "http://" + masterAddr + "/write"
+
+	payload := map[string]string{
+		"key": "toto",
+		"val": "__le__100__",
+	}
+	jsonPayload, _ := json.Marshal(payload)
+	buffer := bytes.NewBuffer(jsonPayload)
+
+	resp, err := http.Post(url, encoding, buffer)
+	if err != nil {
+		t.Errorf("error posting /write: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	body := buf.String()
+
+	if resp.StatusCode != 200 {
+		t.Errorf("/write query failed: %v", body)
+		return
+	}
+
+	time.Sleep(500 * time.Millisecond)
+
+	// Read all values
+	url = "http://" + slaveAddr + "/multi"
+
+	p := `{ "keys": [ "qwerty", "pain au chocolat", "toto" ]}`
+
+	type responsePayload struct {
+		Key   string `json:"k"`
+		Value string `json:"v"`
+		Error error  `json:"e"`
+	}
+	var rp []responsePayload
+
+	buffer = bytes.NewBuffer([]byte(p))
+
+	multiResp, err := http.Post(url, encoding, buffer)
+	if err != nil {
+		t.Errorf("error posting /multi: %v", err)
+		return
+	}
+	defer multiResp.Body.Close()
+
+	if multiResp.StatusCode != 200 {
+		t.Errorf("/multi query failed with status code %d", multiResp.StatusCode)
+		return
+	}
+
+	decoder := json.NewDecoder(multiResp.Body)
+	if err = decoder.Decode(&rp); err != nil {
+		t.Errorf("couldn't decode /multi response: %v", err)
+		return
+	}
+
+	actualData := make(map[string]responsePayload)
+	for _, payload := range rp {
+		actualData[payload.Key] = payload
+	}
+
+	key := "pain au chocolat"
+	if actual, expected := actualData[key].Value, data[key]; actual != expected {
+		t.Errorf("expected value for %s to be %s, got %s", key, expected, actual)
+		return
+	}
+
+	key = "qwerty"
+	if actual, expected := actualData[key].Value, data[key]; actual != expected {
+		t.Errorf("expected value for %s to be %s, got %s", key, expected, actual)
+		return
+	}
+
+	key = "toto"
+	if actual, expected := actualData[key].Value, "__le__100__"; actual != expected {
+		t.Errorf("expected value for %s to be %s, got %s", key, expected, actual)
+		return
 	}
 }
 
@@ -204,7 +357,6 @@ func TestWriteSlave(t *testing.T) {
 
 	// Write
 	url := "http://" + slaveAddr + "/write"
-	encoding := "application/json"
 
 	payload := map[string]string{
 		"key": "qwerty",
