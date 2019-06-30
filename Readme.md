@@ -1,9 +1,11 @@
 # Distributed Key-Value store
 
-I was reading **Designing Data-Intensive applications** and wanted to build my
-own distributed database.
 This is a distributed Key-Value store with basic functionality to better
 understand how distributed databases work.
+
+I was reading [Designing Data-Intensive applications](https://www.goodreads.com/book/show/23463279-designing-data-intensive-applications),
+and in order to better understand some of the concepts described in the book,
+I decided to build a distributed database with replication and master election.
 
 A single master will handle writes and replicate them to n slave nodes, that can
 handle reads (the master can also handle reads).
@@ -14,19 +16,16 @@ following the path of eventual consistency.
 
 ## Functionality
 
-Node:
-Can be slave or master.
-
-all nodes, slave or master:
+All nodes, slave or master:
 - READ a value
-- maintain a list of all nodes
+- maintain a list of all available nodes
 
 slave:
 - check the master node's health
 - elect a new master (while agreeing with other nodes)
 - be promoted to master
 - join a master:
-    - get an ID and a list of nodes from the master
+    - get an ID and a list of available nodes from the master
     - update asynchronously until fully up to date with master
 
 master
