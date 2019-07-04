@@ -73,13 +73,15 @@ func (n *Node) IsMaster() bool {
 
 const allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-var r = rand.New(rand.NewSource(time.Now().UnixNano()))
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 // generates a (pseudo) random ID
 func newID(n int) string {
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = allowedCharacters[r.Intn(len(allowedCharacters))]
+		b[i] = allowedCharacters[rand.Intn(len(allowedCharacters))]
 	}
 	return string(b)
 }
