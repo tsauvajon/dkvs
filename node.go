@@ -1,11 +1,12 @@
 package dkvs
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
+	"time"
 )
 
 // Node is an autonomous kvs node that can be either a slave or a master
@@ -70,22 +71,23 @@ func (n *Node) IsMaster() bool {
 	return n.MasterID == n.ID
 }
 
-func newID() (string, error) {
-	b := make([]byte, 16)
-	_, err := rand.Read(b)
-	if err != nil {
-		return "", err
-	}
+const (
+	charBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+)
 
-	return string(b), err
+var _ = rand.NewSource(time.Now().UnixNano())
+
+// generates a random ID
+func newID(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = charBytes[rand.Intn(len(charBytes))]
+	}
+	return string(b)
 }
 
 func newNode(addr string) (*Node, error) {
-	id, err := newID()
-
-	if err != nil {
-		return nil, err
-	}
+	id := newID(16)
 
 	n := &Node{
 		ID:        id,
